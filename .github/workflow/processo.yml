@@ -1,0 +1,28 @@
+name: Verificar atualizações de processo
+on:
+  schedule:
+    - cron: "0 11 * * *"   # 08h horário de Brasília
+  workflow_dispatch: {}
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: pip install requests
+      - run: python script.py
+        env:
+          EMAIL_USER: ${{ secrets.EMAIL_USER }}
+          EMAIL_PASS: ${{ secrets.EMAIL_PASS }}
+          TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+      - name: Commitar banco de deduplicação atualizado
+        run: |
+          git config user.name "github-actions"
+          git config user.email "actions@github.com"
+          git add enviados.db
+          git diff --cached --quiet || git commit -m "Atualiza registro de enviados"
+          git push
